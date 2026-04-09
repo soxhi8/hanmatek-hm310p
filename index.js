@@ -1,98 +1,76 @@
-const path = require('path');
-const url = require('url');
-const fs = require('fs');
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import url from 'node:url';
+import {
+    app,
+    BrowserWindow,
+    Menu,
+    dialog,
+    ipcMain,
+} from 'electron';
+import storage from 'electron-json-storage';
+import windowStateKeeper from 'electron-window-state';
+import Hm310 from './lib/hm310.js';
 
-const {app, Menu, ipcMain, BrowserWindow} = require('electron');
-
-const storage = require('electron-json-storage');
-const windowStateKeeper = require('electron-window-state');
-const isDev = require('electron-is-dev');
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 let mainWindow;
 let settingsWindow;
 
+const isDev = !app.isPackaged;
 const chartData = {};
-
-const Hm310 = require('./lib/hm310');
 
 let hm310;
 let port;
-
 let lastError;
 
 const menuTemplate = [
     {
         label: 'Edit',
         submenu: [
-            {label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:'},
-            {label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:'},
+            {role: 'undo'},
+            {role: 'redo'},
             {type: 'separator'},
-            {label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:'},
-            {label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:'},
-            {label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:'},
-            {label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:'}
-        ]
+            {role: 'cut'},
+            {role: 'copy'},
+            {role: 'paste'},
+            {role: 'selectAll'},
+        ],
     },
     {
-
         label: 'Tools',
         submenu: [
             {
-                role: 'export',
                 label: 'Export CSV',
-                enabled: true,
                 click() {
                     exportCsv();
-                }
+                },
             },
             {
-                role: 'settings',
                 label: 'Settings',
-                enabled: true,
                 click() {
                     settings();
-                }
-            }
-        ]
-    }
+                },
+            },
+        ],
+    },
 ];
 
 if (process.platform === 'darwin') {
     menuTemplate.unshift({
         label: 'HM310P',
         submenu: [
-            {
-                role: 'about',
-                label: 'About HM310P'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                role: 'services',
-                submenu: []
-            },
-            {
-                type: 'separator'
-            },
-            {
-                role: 'hide',
-                label: 'Hide HM310P'
-            },
-            {
-                role: 'hideothers'
-            },
-            {
-                role: 'unhide'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                role: 'quit',
-                label: 'Quit HM310P'
-            }
-        ]
+            {role: 'about'},
+            {type: 'separator'},
+            {role: 'services'},
+            {type: 'separator'},
+            {role: 'hide'},
+            {role: 'hideOthers'},
+            {role: 'unhide'},
+            {type: 'separator'},
+            {role: 'quit'},
+        ],
     });
 }
 
@@ -108,51 +86,55 @@ function connect() {
     }
 
     storage.get('port', (error, data) => {
-        if (error || !data) {
-            const error = 'Serial Port not defined';
-            console.log(error);
-            mainWindow.webContents.send('error', error);
-            lastError = error;
-        } else {
-            port = data;
+        const storedPort = normalizePortSetting(data);
 
-            hm310 = new Hm310({
-                port
-            });
+        if (error || !storedPort) {
+            const err = 'Serial Port not defined';
+            console.log(err);
+            if (mainWindow) {
+                mainWindow.webContents.send('error', err);
+            }
 
-            hm310.on('connected', val => {
-                console.log('connected', val);
-                if (mainWindow) {
-                    mainWindow.webContents.send('connected', val);
-                }
-            });
+            lastError = err;
+            return;
+        }
 
-            hm310.on('value', (key, val, timestamp) => {
-                //console.log(key, val)
+        port = storedPort;
 
-                if (['voltage', 'current', 'power', 'setVoltage', 'setCurrent'].includes(key)) {
-                    if (!chartData[timestamp]) {
-                        chartData[timestamp] = {};
-                    }
+        hm310 = new Hm310({
+            port,
+        });
 
-                    chartData[timestamp][key] = val;
-                }
+        hm310.on('connected', val => {
+            console.log('connected', val);
+            if (mainWindow) {
+                mainWindow.webContents.send('connected', val);
+            }
+        });
 
-                if (mainWindow) {
-                    mainWindow.webContents.send('values', {key, val});
-                }
-            });
+        hm310.on('value', (key, val, timestamp) => {
+            if (['voltage', 'current', 'power', 'setVoltage', 'setCurrent'].includes(key)) {
+                chartData[timestamp] ||= {};
+                chartData[timestamp][key] = val;
+            }
 
-            hm310.on('error', error => {
-                console.error(error);
-                lastError = error.message;
+            if (mainWindow) {
+                mainWindow.webContents.send('values', {key, val});
+            }
+        });
+
+        hm310.on('error', error => {
+            console.error(error);
+            lastError = error.message;
+
+            if (mainWindow) {
                 mainWindow.webContents.send('error', error.message);
                 if (error.errno === 'ECONNREFUSED') {
                     mainWindow.webContents.send('connected', false);
                     hm310.connected = false;
                 }
-            });
-        }
+            }
+        });
     });
 }
 
@@ -161,75 +143,110 @@ app.on('ready', () => {
     connect();
 });
 
+ipcMain.on('get-settings', event => {
+    storage.get('port', (error, data) => {
+        event.reply('settings-data', {port: normalizePortSetting(data)});
+    });
+});
+
 ipcMain.on('settings', (event, data) => {
-    storage.set('port', data.port, error => {
+    const portValue = typeof data.port === 'string' ? data.port.trim() : '';
+
+    storage.set('port', portValue, error => {
         if (error) {
-            mainWindow.webContents.send('error', error.message);
+            if (mainWindow) {
+                mainWindow.webContents.send('error', error.message);
+            }
+
+            event.reply('settings-save-result', {ok: false, error: error.message});
+            return;
         }
 
         connect();
+        event.reply('settings-save-result', {ok: true, port: portValue});
     });
 });
 
 ipcMain.on('refresh', () => {
-    //console.log('refresh');
-    mainWindow.webContents.send('connected', this.connected);
-    if (!this.connected && lastError) {
+    if (!mainWindow) {
+        return;
+    }
+
+    mainWindow.webContents.send('connected', hm310 ? hm310.connected : false);
+    if ((!hm310 || !hm310.connected) && lastError) {
         mainWindow.webContents.send('error', lastError);
     }
 
     if (hm310 && hm310.values) {
-        Object.keys(hm310.values).forEach(key => {
+        for (const key of Object.keys(hm310.values)) {
             mainWindow.webContents.send('values', {key, val: hm310.values[key]});
-        });
+        }
     }
 });
 
 ipcMain.on('write', (event, data) => {
-    hm310.write(data.key, data.val);
+    if (hm310) {
+        hm310.write(data.key, data.val);
+    }
+});
+
+ipcMain.on('show-save-dialog', async event => {
+    const res = await dialog.showSaveDialog(mainWindow, {
+        title: 'Export CSV',
+        filters: [
+            {name: 'Comma Separated Values', extensions: ['csv']},
+        ],
+    });
+
+    if (res && res.filePath && !res.canceled) {
+        event.reply('export-confirmed', res.filePath);
+    }
 });
 
 ipcMain.on('export', (event, file) => {
-    fs.writeFile(
-        file,
-        'timestamp;voltage;current;power;setVoltage;setCurrent\n' +
-            Object.keys(chartData).map(timestamp => [
-                timestamp,
-                typeof chartData[timestamp].voltage === 'undefined' ? '' : chartData[timestamp].voltage,
-                typeof chartData[timestamp].current === 'undefined' ? '' : chartData[timestamp].current,
-                typeof chartData[timestamp].power === 'undefined' ? '' : chartData[timestamp].power,
-                typeof chartData[timestamp].setVoltage === 'undefined' ? '' : chartData[timestamp].setVoltage,
-                typeof chartData[timestamp].setCurrent === 'undefined' ? '' : chartData[timestamp].setCurrent
-            ].join(';')).join('\n'),
-        () => {
+    const content = 'timestamp;voltage;current;power;setVoltage;setCurrent\n'
+        + Object.keys(chartData).map(timestamp => [
+            timestamp,
+            chartData[timestamp].voltage ?? '',
+            chartData[timestamp].current ?? '',
+            chartData[timestamp].power ?? '',
+            chartData[timestamp].setVoltage ?? '',
+            chartData[timestamp].setCurrent ?? '',
+        ].join(';')).join('\n');
+
+    fs.writeFile(file, content, error => {
+        if (error) {
+            console.error('Export failed:', error);
+        } else {
             console.log('wrote', file);
         }
-    );
+    });
 });
 
 function createWindow() {
     const mainWindowState = windowStateKeeper({
         defaultWidth: 1366,
-        defaultHeight: 768
+        defaultHeight: 768,
     });
 
-    const devWindowState = {
-        width: 1600,
-        height: 800
-    };
-
-    const windowState = isDev ? devWindowState : mainWindowState;
-
-    mainWindow = new BrowserWindow(Object.assign(windowState, {
+    mainWindow = new BrowserWindow({
+        x: mainWindowState.x,
+        y: mainWindowState.y,
+        width: mainWindowState.width,
+        height: mainWindowState.height,
         webPreferences: {
-            nodeIntegration: true
-        }
-    }));
+            preload: path.join(__dirname, 'preload.cjs'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+
+    mainWindowState.manage(mainWindow);
 
     mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'index.html'),
         protocol: 'file:',
-        slashes: true
+        slashes: true,
     }));
 
     const menu = Menu.buildFromTemplate(menuTemplate);
@@ -248,13 +265,16 @@ function settings() {
         modal: true,
         parent: mainWindow,
         webPreferences: {
-            nodeIntegration: true
-        }
+            preload: path.join(__dirname, 'preload.cjs'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
     });
+
     settingsWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'settings.html'),
         protocol: 'file:',
-        slashes: true
+        slashes: true,
     }));
 
     settingsWindow.show();
@@ -268,5 +288,19 @@ function settings() {
 }
 
 function exportCsv() {
-    mainWindow.webContents.send('csv', {});
+    if (mainWindow) {
+        mainWindow.webContents.send('csv');
+    }
+}
+
+function normalizePortSetting(value) {
+    if (typeof value === 'string') {
+        return value.trim();
+    }
+
+    if (value && typeof value.port === 'string') {
+        return value.port.trim();
+    }
+
+    return '';
 }
