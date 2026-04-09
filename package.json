@@ -59,14 +59,24 @@
     "productName": "HM310P",
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ]
     },
     "linux": {
+      "category": "Utility",
       "target": [
+        "AppImage",
         "deb",
-        "tar.gz"
+        "tar.gz",
+        "rpm",
+        "pacman",
+        "flatpak"
       ]
+    },
+    "flatpak": {
+      "runtimeVersion": "23.08",
+      "baseVersion": "23.08"
     },
     "win": {
       "target": [
