@@ -1,20 +1,12 @@
-const {ipcRenderer: ipc, remote} = require('electron');
+const ipc = globalThis.electron.ipcRenderer;
 
-const {dialog} = remote;
-
-const jQuery = require('jquery');
-const $ = jQuery;
-
-require('bootstrap');
-
-const Highcharts = require('highcharts');
-require('highcharts/highcharts-more')(Highcharts);
-require('highcharts/themes/gray')(Highcharts);
+const $ = globalThis.jQuery;
+const Highcharts = globalThis.Highcharts;
 
 Highcharts.setOptions({
-    global: {
-        useUTC: false
-    }
+    time: {
+        useUTC: false,
+    },
 });
 
 let gaugeZoom = true;
@@ -22,258 +14,170 @@ let gaugeZoom = true;
 const voltageGauge = Highcharts.chart('voltageGauge', {
     chart: {
         type: 'gauge',
-        //plotBorderWidth: 1,
         backgroundColor: '#222',
         plotBackgroundColor: '#222',
         plotBackgroundImage: null,
-        height: 150
+        height: 150,
     },
-    credits: {
-        enabled: false
-    },
-    title: {
-        text: ''
-    },
-
+    credits: {enabled: false},
+    title: {text: ''},
     pane: [{
         startAngle: -45,
         endAngle: 45,
         background: null,
         center: ['50%', '145%'],
-        size: 300
+        size: 300,
     }],
-
-    exporting: {
-        enabled: false
-    },
-
-    tooltip: {
-        enabled: false
-    },
-
+    exporting: {enabled: false},
+    tooltip: {enabled: false},
     yAxis: [{
         min: 0,
         max: 32,
+        lineColor: '#888',
+        lineWidth: 2,
+        minorTickInterval: 'auto',
         minorTickPosition: 'outside',
+        minorTickColor: '#888',
+        minorTickLength: 6,
+        minorTickWidth: 1,
         tickPosition: 'outside',
+        tickColor: '#888',
+        tickLength: 10,
+        tickWidth: 2,
         labels: {
             rotation: 'auto',
             distance: 20,
-            style: {
-                color: '#fff'
-            }
+            style: {color: '#fff'},
         },
-        plotBands: [
-            {
-                from: 0,
-                to: 32,
-                color: 'red',
-                id: 'plotband-voltage'
-            }
-        ],
-        plotLines: [
-
-        ],
+        plotBands: [{
+            from: 0, to: 32, color: 'red', id: 'plotband-voltage',
+        }],
         pane: 0,
-        title: {
-            text: 'V',
-            y: -40
-        }
+        title: {text: 'V', y: -40},
     }],
-
     plotOptions: {
         gauge: {
-            dataLabels: {
-                enabled: false
-            },
-            dial: {
-                backgroundColor: '#fff',
-                radius: '100%'
-            }
-        }
+            dataLabels: {enabled: false},
+            dial: {backgroundColor: '#fff', radius: '100%'},
+        },
     },
-
-    series: [{
-        name: 'Voltage',
-        data: [0],
-        yAxis: 0
-    }]
-
+    series: [{name: 'Voltage', data: [0], yAxis: 0}],
 });
+
 const currentGauge = Highcharts.chart('currentGauge', {
     chart: {
         type: 'gauge',
-        //plotBorderWidth: 1,
         backgroundColor: '#222',
         plotBackgroundColor: '#222',
         plotBackgroundImage: null,
-        height: 150
+        height: 150,
     },
-    credits: {
-        enabled: false
-    },
-    title: {
-        text: ''
-    },
-
+    credits: {enabled: false},
+    title: {text: ''},
     pane: [{
         startAngle: -45,
         endAngle: 45,
         background: null,
         center: ['50%', '145%'],
-        size: 300
+        size: 300,
     }],
-
-    exporting: {
-        enabled: false
-    },
-
-    tooltip: {
-        enabled: false
-    },
-
+    exporting: {enabled: false},
+    tooltip: {enabled: false},
     yAxis: [{
         min: 0,
         max: 10,
+        lineColor: '#888',
+        lineWidth: 2,
+        minorTickInterval: 'auto',
         minorTickPosition: 'outside',
+        minorTickColor: '#888',
+        minorTickLength: 6,
+        minorTickWidth: 1,
         tickPosition: 'outside',
+        tickColor: '#888',
+        tickLength: 10,
+        tickWidth: 2,
         labels: {
             rotation: 'auto',
             distance: 20,
-            style: {
-                color: '#fff'
-            }
+            style: {color: '#fff'},
         },
-        plotBands: [
-            {
-                from: 0,
-                to: 10,
-                color: 'red',
-                id: 'plotband-current'
-            }
-        ],
-        plotLines: [
-
-        ],
+        plotBands: [{
+            from: 0, to: 10, color: 'red', id: 'plotband-current',
+        }],
         pane: 0,
-        title: {
-            text: 'A',
-            color: '#fff',
-            y: -40
-        }
+        title: {text: 'A', style: {color: '#fff'}, y: -40},
     }],
-
     plotOptions: {
         gauge: {
-            dataLabels: {
-                enabled: false
-            },
-            dial: {
-                backgroundColor: '#fff',
-                radius: '100%'
-            }
-        }
+            dataLabels: {enabled: false},
+            dial: {backgroundColor: '#fff', radius: '100%'},
+        },
     },
-
-    series: [{
-        name: 'Current',
-        data: [0],
-        yAxis: 0
-    }]
-
+    series: [{name: 'Current', data: [0], yAxis: 0}],
 });
+
 const powerGauge = Highcharts.chart('powerGauge', {
     chart: {
         type: 'gauge',
-        //plotBorderWidth: 1,
         backgroundColor: '#222',
         plotBackgroundColor: '#222',
         plotBackgroundImage: null,
-        height: 150
+        height: 150,
     },
-    credits: {
-        enabled: false
-    },
-    title: {
-        text: ''
-    },
-
+    credits: {enabled: false},
+    title: {text: ''},
     pane: [{
         startAngle: -45,
         endAngle: 45,
         background: null,
         center: ['50%', '145%'],
-        size: 300
+        size: 300,
     }],
-
-    exporting: {
-        enabled: false
-    },
-
-    tooltip: {
-        enabled: false
-    },
-
+    exporting: {enabled: false},
+    tooltip: {enabled: false},
     yAxis: [{
         min: 0,
         max: 300,
+        lineColor: '#888',
+        lineWidth: 2,
+        minorTickInterval: 'auto',
         minorTickPosition: 'outside',
+        minorTickColor: '#888',
+        minorTickLength: 6,
+        minorTickWidth: 1,
         tickPosition: 'outside',
+        tickColor: '#888',
+        tickLength: 10,
+        tickWidth: 2,
         labels: {
             rotation: 'auto',
             distance: 20,
-            style: {
-                color: '#fff'
-            }
+            style: {color: '#fff'},
         },
-        plotBands: [
-
-        ],
-        plotLines: [
-
-        ],
+        plotBands: [],
         pane: 0,
-        title: {
-            text: 'W',
-            color: '#fff',
-            y: -40
-        }
+        title: {text: 'W', style: {color: '#fff'}, y: -40},
     }],
-
     plotOptions: {
         gauge: {
-            dataLabels: {
-                enabled: false
-            },
-            dial: {
-                backgroundColor: '#fff',
-                radius: '100%'
-            }
-        }
+            dataLabels: {enabled: false},
+            dial: {backgroundColor: '#fff', radius: '100%'},
+        },
     },
-
-    series: [{
-        name: 'Current',
-        data: [0],
-        yAxis: 0
-    }]
-
+    series: [{name: 'Power', data: [0], yAxis: 0}],
 });
+
 const chart = Highcharts.chart('chart', {
     chart: {
         type: 'line',
-        //plotBorderWidth: 1,
         backgroundColor: '#222',
         plotBackgroundColor: '#222',
         plotBackgroundImage: null,
-        height: 230
+        height: 230,
     },
-    credits: {
-        enabled: true
-    },
-    title: {
-        text: ''
-    },
+    credits: {enabled: true},
+    title: {text: ''},
     legend: {
         align: 'right',
         verticalAlign: 'top',
@@ -281,101 +185,88 @@ const chart = Highcharts.chart('chart', {
         x: 0,
         y: 30,
         backgroundColor: '#222',
-        itemHiddenStyle: {
-            color: '#666'
-        },
-        itemMarginTop: 6
+        itemHiddenStyle: {color: '#666'},
+        itemMarginTop: 6,
     },
     plotOptions: {
         series: {
             step: 'left',
-            marker: {
-                symbol: 'circle'
-            }
-        }
+            marker: {symbol: 'circle'},
+        },
     },
-    xAxis: {
-        type: 'datetime'
-    },
-    yAxis: {
-        title: ''
-    },
-    series: [{
-        data: [],
-        name: 'Voltage [V]'
-    }, {
-        data: [],
-        name: 'Current [A]'
-    }, {
-        data: [],
-        name: 'Power [W]'
-    }, {
-        data: [],
-        name: 'SetVoltage [V]'
-    }, {
-        data: [],
-        name: 'SetCurrent [A]'
-    }]
-
+    xAxis: {type: 'datetime'},
+    yAxis: {title: {text: ''}},
+    series: [
+        {data: [], name: 'Voltage [V]'},
+        {data: [], name: 'Current [A]'},
+        {data: [], name: 'Power [W]'},
+        {data: [], name: 'SetVoltage [V]'},
+        {data: [], name: 'SetCurrent [A]'},
+    ],
 });
 
-const values = {};
+const values = {
+    voltage: 0,
+    current: 0,
+    power: 0,
+    setVoltage: 0,
+    setCurrent: 0,
+    decimalsVoltage: 2,
+    decimalsCurrent: 3,
+    decimalsPower: 3,
+    powerSwitch: false,
+};
 
-document.querySelectorAll('.write').forEach(elem => {
+for (const elem of document.querySelectorAll('.write')) {
     elem.addEventListener('change', event => {
-        console.log('change!', event.target.id, event.target.value);
         if (event.target.type === 'checkbox') {
             ipc.send('write', {key: event.target.id, val: event.target.checked});
         } else {
             ipc.send('write', {key: event.target.id, val: event.target.value});
         }
     });
-});
+}
 
 $('#powerSwitch').click(() => {
-    if (values.powerSwitch) {
-        $('#powerSwitch').addClass('btn-secondary').removeClass('btn-success');
-    } else {
-        $('#powerSwitch').addClass('btn-success').removeClass('btn-secondary');
-    }
-
     ipc.send('write', {key: 'powerSwitch', val: !values.powerSwitch});
 });
 
-ipc.on('csv', () => {
-    dialog.showSaveDialog({
-        title: 'Export CSV',
-        filters: [
-            {name: 'Comma Separated Values', extensions: ['csv']}
-        ]
-    }).then(res => {
-        if (res && res.filePath && !res.canceled) {
-            ipc.send('export', res.filePath);
-        }
-    });
+ipc.on('csv', async () => {
+    ipc.send('show-save-dialog');
 });
 
-ipc.on('connected', (event, data) => {
+ipc.on('export-confirmed', filePath => {
+    ipc.send('export', filePath);
+});
+
+ipc.on('connected', data => {
     if (data) {
-        $('#alert').alert('close');
+        const alertNode = document.querySelector('#alert');
+        if (alertNode) {
+            if (globalThis.bootstrap && globalThis.bootstrap.Alert) {
+                const bsAlert = globalThis.bootstrap.Alert.getOrCreateInstance(alertNode);
+                bsAlert.close();
+            } else {
+                alertNode.remove();
+            }
+        }
     }
-
-    console.log('connected', data);
 });
 
-ipc.on('error', (event, error) => {
-    console.log('error', error);
-    if (document.querySelector('#alert')) {
-        $('#alertText').html('<strong>Error:</strong> ' + error);
+ipc.on('error', error => {
+    const alertText = document.querySelector('#alertText');
+    if (alertText) {
+        alertText.innerHTML = '<strong>Error:</strong> ' + error;
     } else {
-        $('body').prepend(`
-            <div id="alert" class="alert alert-danger alert-dismissible fade show" role="alert">
-                <span id="alertText"><strong>Error:</strong> ${error}</span>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        `);
+        const alertDiv = document.createElement('div');
+        alertDiv.id = 'alert';
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.innerHTML = `
+            <span id="alertText"><strong>Error:</strong> ${error}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.prepend(alertDiv);
     }
 });
 
@@ -384,157 +275,192 @@ const seriesLookup = {
     current: 1,
     power: 2,
     setVoltage: 3,
-    setCurrent: 4
+    setCurrent: 4,
 };
 
 function addPoint(series, val) {
-    const now = (new Date()).getTime();
+    const now = Date.now();
     const data = [now, val];
-    //chartData[series].push(data);
     chart.series[seriesLookup[series]].addPoint(data, true, false);
 }
 
-ipc.on('values', (event, data) => {
+function updateLargeDigits() {
+    const dVoltage = document.querySelector('#dVoltage');
+    const dCurrent = document.querySelector('#dCurrent');
+    const dPower = document.querySelector('#dPower');
+
+    if (values.powerSwitch) {
+        if (dVoltage) {
+            dVoltage.innerHTML = (Number(values.voltage) || 0).toFixed(values.decimalsVoltage || 2);
+        }
+
+        if (dCurrent) {
+            dCurrent.innerHTML = (Number(values.current) || 0).toFixed(values.decimalsCurrent || 3);
+        }
+
+        if (dPower) {
+            dPower.innerHTML = (Number(values.power) || 0).toFixed(values.decimalsPower || 3);
+        }
+    } else {
+        if (dVoltage) {
+            dVoltage.innerHTML = (Number(values.setVoltage) || 0).toFixed(values.decimalsVoltage || 2);
+        }
+
+        if (dCurrent) {
+            dCurrent.innerHTML = (Number(values.setCurrent) || 0).toFixed(values.decimalsCurrent || 3);
+        }
+
+        if (dPower) {
+            dPower.innerHTML = 'OFF';
+        }
+    }
+}
+
+ipc.on('values', data => {
     values[data.key] = data.val;
 
     let updateElems = true;
 
     switch (data.key) {
-        case 'voltage':
-            voltageGauge.series[0].points[0].update(data.val);
-            voltageGauge.redraw();
-            updateModes();
-            addPoint('voltage', data.val);
+        case 'voltage': {
+            handleVoltageValue(data.val);
             break;
+        }
 
-        case 'current':
-            currentGauge.series[0].points[0].update(data.val);
-            currentGauge.redraw();
-            updateModes();
-            addPoint('current', data.val);
+        case 'current': {
+            handleCurrentValue(data.val);
             break;
+        }
 
-        case 'power':
-            powerGauge.series[0].points[0].update(data.val);
-            powerGauge.redraw();
-            addPoint('power', data.val);
+        case 'power': {
+            handlePowerValue(data.val);
             break;
+        }
 
-        case 'setVoltage':
-            voltageGauge.yAxis[0].removePlotBand('plotband-voltage');
-            voltageGauge.yAxis[0].addPlotBand({
-                from: data.val,
-                to: gaugeZoom ? Math.ceil(values.setVoltage) : 32,
-                color: 'red',
-                id: 'plotband-voltage'
-            });
-            voltageGauge.redraw();
-            updateModes();
-            updateZoom();
-            addPoint('setVoltage', data.val);
+        case 'setVoltage': {
+            handleSetVoltageValue(data.val);
             break;
+        }
 
-        case 'setCurrent':
-            currentGauge.yAxis[0].removePlotBand('plotband-current');
-            currentGauge.yAxis[0].addPlotBand({
-                from: data.val,
-                to: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10,
-                color: 'red',
-                id: 'plotband-current'
-            });
-            currentGauge.redraw();
-            updateModes();
-            updateZoom();
-            addPoint('setCurrent', data.val);
+        case 'setCurrent': {
+            handleSetCurrentValue(data.val);
             break;
+        }
 
-        case 'overVoltageProtection':
-            if (data.val) {
-                $('#ovp').show();
-            } else {
-                $('#ovp').hide();
-            }
-
-            //$('#ovp').css('background-color', values.overVoltageProtection ? '#E74C3C' : '#444');
+        case 'overVoltageProtection': {
+            toggleBadge('#ovp', data.val);
             updateElems = false;
             break;
+        }
 
-        case 'overCurrentProtection':
-            if (data.val) {
-                $('#ocp').show();
-            } else {
-                $('#ocp').hide();
-            }
-
-            //$('#ocp').css('background-color', values.overCurrentProtection ? '#E74C3C' : '#444');
+        case 'overCurrentProtection': {
+            toggleBadge('#ocp', data.val);
             updateElems = false;
             break;
+        }
 
-        case 'overPowerProtection':
-            if (data.val) {
-                $('#opp').show();
-            } else {
-                $('#opp').hide();
-            }
-
-            //$('#opp').css('background-color', values.overPowerProtection ? '#E74C3C' : '#444');
+        case 'overPowerProtection': {
+            toggleBadge('#opp', data.val);
             break;
+        }
 
-        case 'overTemperatureProtection':
-            if (data.val) {
-                $('#otp').show();
-            } else {
-                $('#otp').hide();
-            }
-
-            //$('#opp').css('background-color', values.overPowerProtection ? '#E74C3C' : '#444');
+        case 'overTemperatureProtection': {
+            toggleBadge('#otp', data.val);
             break;
+        }
 
-        case 'shortCircuitProtection':
-            if (data.val) {
-                $('#scp').show();
-            } else {
-                $('#scp').hide();
-            }
-
+        case 'shortCircuitProtection': {
+            toggleBadge('#scp', data.val);
             updateElems = false;
             break;
+        }
 
-        case 'powerSwitch':
-            if (data.val) {
-                $('#powerSwitch').addClass('btn-success').removeClass('btn-secondary');
-            } else {
-                $('#powerSwitch').addClass('btn-secondary').removeClass('btn-success');
-            }
-
+        case 'powerSwitch': {
+            updatePowerSwitch(data.val);
             updateElems = false;
             break;
+        }
 
         default:
     }
 
     if (updateElems) {
-        const elem = document.querySelector('#' + data.key);
-
+        const elem = document.querySelector(`#${data.key}`);
         if (elem) {
             if (elem.tagName === 'INPUT') {
-                elem.setAttribute('value', data.val);
+                elem.value = data.val;
             } else {
                 elem.innerHTML = data.val;
             }
         }
     }
 
-    if (values.powerSwitch) {
-        $('#dVoltage').html((values.voltage || 0).toFixed(values.decimalsVoltage || 2));
-        $('#dCurrent').html((values.current || 0).toFixed(values.decimalsCurrent || 3));
-        $('#dPower').html((values.power || 0).toFixed(values.decimalsPower || 3));
-    } else {
-        $('#dVoltage').html((values.setVoltage || 0).toFixed(values.decimalsVoltage || 2));
-        $('#dCurrent').html((values.setCurrent || 0).toFixed(values.decimalsCurrent || 3));
-        $('#dPower').html('0FF');
-    }
+    updateLargeDigits();
 });
+
+function handleVoltageValue(value) {
+    voltageGauge.series[0].points[0].update(value);
+    voltageGauge.redraw();
+    updateModes();
+    addPoint('voltage', value);
+}
+
+function handleCurrentValue(value) {
+    currentGauge.series[0].points[0].update(value);
+    currentGauge.redraw();
+    updateModes();
+    addPoint('current', value);
+}
+
+function handlePowerValue(value) {
+    powerGauge.series[0].points[0].update(value);
+    powerGauge.redraw();
+    addPoint('power', value);
+}
+
+function handleSetVoltageValue(value) {
+    voltageGauge.yAxis[0].removePlotBand('plotband-voltage');
+    voltageGauge.yAxis[0].addPlotBand({
+        from: value,
+        to: gaugeZoom ? Math.ceil(values.setVoltage) : 32,
+        color: 'red',
+        id: 'plotband-voltage',
+    });
+    voltageGauge.redraw();
+    updateModes();
+    updateZoom();
+    addPoint('setVoltage', value);
+}
+
+function handleSetCurrentValue(value) {
+    currentGauge.yAxis[0].removePlotBand('plotband-current');
+    currentGauge.yAxis[0].addPlotBand({
+        from: value,
+        to: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10,
+        color: 'red',
+        id: 'plotband-current',
+    });
+    currentGauge.redraw();
+    updateModes();
+    updateZoom();
+    addPoint('setCurrent', value);
+}
+
+function toggleBadge(selector, isVisible) {
+    if (isVisible) {
+        $(selector).show();
+    } else {
+        $(selector).hide();
+    }
+}
+
+function updatePowerSwitch(isEnabled) {
+    if (isEnabled) {
+        $('#powerSwitch').addClass('btn-success').removeClass('btn-secondary');
+    } else {
+        $('#powerSwitch').addClass('btn-secondary').removeClass('btn-success');
+    }
+}
 
 function updateModes() {
     $('#cv').css('background-color', values.voltage === values.setVoltage ? '#00bc8c' : '#444');
@@ -543,26 +469,26 @@ function updateModes() {
 
 function updateZoom() {
     voltageGauge.yAxis[0].update({max: gaugeZoom ? Math.ceil(values.setVoltage) : 32});
-    currentGauge.yAxis[0].update({max: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10});
-    powerGauge.yAxis[0].update({max: gaugeZoom ? Math.ceil(values.setCurrent * values.setVoltage) : 300});
-
-    currentGauge.yAxis[0].removePlotBand('plotband-current');
-    currentGauge.yAxis[0].addPlotBand({
-        from: values.setCurrent,
-        to: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10,
-        color: 'red',
-        id: 'plotband-current'
-    });
-    currentGauge.redraw();
-
     voltageGauge.yAxis[0].removePlotBand('plotband-voltage');
     voltageGauge.yAxis[0].addPlotBand({
         from: values.setVoltage,
         to: gaugeZoom ? Math.ceil(values.setVoltage) : 32,
         color: 'red',
-        id: 'plotband-voltage'
+        id: 'plotband-voltage',
     });
     voltageGauge.redraw();
+
+    currentGauge.yAxis[0].update({max: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10});
+    currentGauge.yAxis[0].removePlotBand('plotband-current');
+    currentGauge.yAxis[0].addPlotBand({
+        from: values.setCurrent,
+        to: gaugeZoom ? Math.ceil(values.setCurrent * 1.1) : 10,
+        color: 'red',
+        id: 'plotband-current',
+    });
+    currentGauge.redraw();
+
+    powerGauge.yAxis[0].update({max: gaugeZoom ? (Math.ceil(values.setCurrent * values.setVoltage) || 300) : 300});
 }
 
 ipc.send('refresh', {});

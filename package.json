@@ -2,6 +2,7 @@
   "name": "hanmatek-hm310p",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Electron based application for the Hanmatek HM310P DC Power Supply, offers Charts and CSV Export.",
   "keywords": [
     "hanmatek",
@@ -14,6 +15,7 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
+    "bun-start": "bun x electron .",
     "test": "xo",
     "lintfix": "xo --fix",
     "dist": "electron-builder build",
@@ -27,21 +29,19 @@
   "homepage": "https://github.com/hobbyquaker/hanmatek-hm310p",
   "license": "MIT",
   "dependencies": {
-    "electron-is-dev": "^1.2.0",
-    "electron-json-storage": "^4.2.0",
-    "electron-window-state": "^5.0.3",
-    "@fortawesome/fontawesome-free": "^5.14.0",
-    "bootstrap": "^4.5.0",
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "bootstrap": "^5.3.8",
     "dseg": "^0.46.0",
-    "highcharts": "^8.1.2",
-    "jquery": "^3.5.1",
-    "modbus-serial": "^8.0.0",
-    "popper.js": "^1.16.1"
+    "electron-json-storage": "^4.6.0",
+    "electron-window-state": "^5.0.3",
+    "highcharts": "^12.5.0",
+    "jquery": "^4.0.0",
+    "modbus-serial": "^8.0.15"
   },
   "devDependencies": {
-    "electron": "^9.1.0",
-    "electron-builder": "^22.7.0",
-    "xo": "^0.32.1"
+    "electron": "^34.0.0",
+    "electron-builder": "^25.0.0",
+    "xo": "^0.60.0"
   },
   "xo": {
     "space": 4,
