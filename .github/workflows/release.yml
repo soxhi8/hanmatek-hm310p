@@ -126,6 +126,10 @@ jobs:
               run: |
                   mapfile -t assets < <(
                     find release-assets -type f \
+                      ! -name 'elevate.exe' \
+                      ! -path '*/win-unpacked/*' \
+                      ! -path '*/linux-unpacked/*' \
+                      ! -path '*/mac/*' \
                       \( \
                         -name '*.AppImage' -o \
                         -name '*.deb' -o \
@@ -135,8 +139,7 @@ jobs:
                         -name '*.dmg' -o \
                         -name '*.zip' -o \
                         -name '*.exe' -o \
-                        -name '*.tar.gz' -o \
-                        -name '*.blockmap' \
+                        -name '*.tar.gz' \
                       \)
                   )
 
